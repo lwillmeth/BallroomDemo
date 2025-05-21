@@ -1,1 +1,4 @@
-# BallroomDemo
+```
+npm install
+npm run deploy
+```
