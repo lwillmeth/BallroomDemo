@@ -5,11 +5,15 @@
     "build": "esbuild --bundle --outfile=./dist/index.js --platform=node --target=node20 ./src/index.ts",
     "zip": "zip -j lambda.zip dist/index.js",
     "update": "aws lambda update-function-code --zip-file fileb://lambda.zip --function-name hello",
-    "deploy": "run-s build zip update"
+    "deploy": "run-s build zip update",
+    "test": "jest"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "esbuild": "^0.21.4",
+    "jest": "^29.7.0",
     "npm-run-all2": "^6.2.0",
+    "ts-jest": "^29.3.4",
     "typescript": "^5.8.3"
   },
   "dependencies": {

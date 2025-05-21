@@ -1,0 +1,16 @@
+{
+  "total_leaders": 10,
+  "total_followers": 15,
+  "dance_styles": ["Waltz", "Tango", "Foxtrot"],
+  "leader_knowledge": {
+    "1": ["Waltz", "Tango"],
+    "2": ["Foxtrot"],
+    "3": ["Waltz", "Foxtrot"]
+  },
+  "follower_knowledge": {
+    "A": ["Waltz", "Tango", "Foxtrot"],
+    "B": ["Tango"],
+    "C": ["Waltz"]
+  },
+  "dance_duration_minutes": 120
+}
