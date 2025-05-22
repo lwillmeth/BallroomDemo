@@ -1,6 +1,6 @@
 import { Hono, Context } from 'hono'
 import { serve } from '@hono/node-server';
-import { calculatePartners } from './handlers/calculatePartners'
+import { calculatePartners, CalculatePartnersRequest } from './handlers/calculatePartners'
 
 const app = new Hono()
 
@@ -10,7 +10,7 @@ app.get('/*', (c) => {
 
 app.post('/calculate-partners', async (c: Context) => {
   try {
-    const body = await c.req.json()
+    const body: CalculatePartnersRequest = await c.req.json()
     const result = await calculatePartners(body)
     return c.json(result, 200)
   } catch (error: any) {
