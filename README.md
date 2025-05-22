@@ -7,11 +7,17 @@ This is my solution to the [Advanced Ballroom Dancing Microservice Challenge](./
 ## Usage
 
 Requirements:
-- Docker
+- [Docker](https://www.docker.com/)
 
 `docker compose up`
 
 This should start a docker container and expose the service on localhost:3000
+
+Developers can run the service locally using Node 20:
+```
+npm install
+npm run dev
+```
 
 ## API Documentation
 
