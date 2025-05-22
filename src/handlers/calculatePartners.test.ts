@@ -45,7 +45,12 @@ describe('calculatePartners', () => {
     })
 
     describe('checking results', () => {
-        it('respects short dance_duration_minutes', async () => {
+        it('returns the correct average for the baseRequest', async () => {
+            const res = await calculatePartners(baseRequest)
+            expect(res.average_dance_partners).toBe(1.2)
+        })
+
+        it('returns the correct average for a shorter dance session', async () => {
             const req: CalculatePartnersRequest = {
                 ...baseRequest,
                 dance_duration_minutes: 5
@@ -53,12 +58,7 @@ describe('calculatePartners', () => {
             const res = await calculatePartners(req)
             expect(res).toHaveProperty('average_dance_partners')
             expect(typeof res.average_dance_partners).toBe('number')
-            expect(res.average_dance_partners).toBe(1)
-        })
-
-        it('allows a longer dance_duration_minutes', async () => {
-            const res = await calculatePartners(baseRequest)
-            expect(res.average_dance_partners).toBe(2)
+            expect(res.average_dance_partners).toBe(0.4)
         })
 
         it('does not let a leader be their own follower', async () => {
@@ -105,7 +105,7 @@ describe('calculatePartners', () => {
             expect(res.average_dance_partners).toBe(0)
         })
 
-        it('returns correct average when all followers match all leaders', async () => {
+        it('returns correct average when partners dance multiple times', async () => {
             const req: CalculatePartnersRequest = {
                 total_leaders: 2,
                 total_followers: 2,

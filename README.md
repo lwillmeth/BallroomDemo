@@ -77,3 +77,44 @@ The body must match the `CalculatePartnersRequest` interface:
 
 Send a POST request to `/calculate-partners` with the event and dancer data.  
 The response will include the calculated average number of dance partners per leader, or an error message if the input is invalid.
+
+## GET `/dance-preferences`
+
+Returns the most and least popular dance styles based on the number of dances performed during the session.
+
+### Request
+
+- **URL:** `/dance-preferences`
+- **Method:** `GET`
+- **Content-Type:** `application/json`
+
+### Response
+
+- **Success (200):**
+  ```json
+  {
+    "mostPopular": "Waltz",
+    "leastPopular": "Tango",
+    "all": {
+      "Waltz": 10,
+      "Tango": 2,
+      "Foxtrot": 5
+    }
+  }
+  ```
+
+  - `mostPopular`: The dance style with the highest count (or `null` if none).
+  - `leastPopular`: The dance style with the lowest count (or `null` if none).
+  - `all`: An object mapping each dance style to the number of times it was danced.
+
+- **If no data is available:**
+  ```json
+  {
+    "mostPopular": null,
+    "leastPopular": null
+  }
+  ```
+
+### Description
+
+This endpoint analyzes the session data and returns which dance styles were the most and least popular, as well as a breakdown of all tracked styles and their counts.

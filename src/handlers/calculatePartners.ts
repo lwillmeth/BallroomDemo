@@ -1,3 +1,5 @@
+import { db, updateDanceCount } from '../db/localdb';
+
 export interface DancerKnowledge {
     [key: string]: string[];
 }
@@ -37,42 +39,60 @@ export const calculatePartners = async ({
         throw new Error(`dance_duration_minutes must be at least ${DANCE_LENGTH_MINUTES} minutes.`);
     }
 
-    // Assumes that a dance will not begin if there's not enough time left to finish it
-    const maxNumDances = Math.floor(dance_duration_minutes / DANCE_LENGTH_MINUTES);
-    const dancesPerLeader = findPartnersByLeader(dance_styles, leader_knowledge, follower_knowledge);
+    // Map each leader to a Set of unique followers they dance with
+    const leaderToFollowers: Record<string, Set<string>> = {};
 
-    // console.log({ dancesPerLeader})
-    const totalDances = Object.values(dancesPerLeader).reduce((acc, followers) => {
-        const dancesPerLeader = followers.length > maxNumDances ? maxNumDances : followers.length;
-        return acc + dancesPerLeader;
-    }, 0);
+    const numDances = Math.floor(dance_duration_minutes / DANCE_LENGTH_MINUTES);
 
-    // Assumes the average should be rounded down to the nearest whole number
-    return { average_dance_partners: Math.floor(totalDances / total_leaders) };
+    for(let i=0; i < numDances; i++) {
+        const currentDanceStyle = dance_styles[i % dance_styles.length];
+        const dancePartners = getPartnersByDanceStyle(currentDanceStyle, leader_knowledge, follower_knowledge);
+
+        for (const { leader, follower } of dancePartners) {
+            if (!leaderToFollowers[leader]) {
+                leaderToFollowers[leader] = new Set();
+            }
+            leaderToFollowers[leader].add(follower);
+        }
+
+        updateDanceCount(currentDanceStyle, 1);
+    }
+
+    // Calculate the average number of unique dance partners per leader
+    const totalUniquePairs = Object.values(leaderToFollowers).reduce((sum, followers) => sum + followers.size, 0) * 2;
+    const average_dance_partners = totalUniquePairs / (total_leaders + total_followers);
+    return { average_dance_partners };
 };
 
-const findPartnersByLeader = (
-    dance_styles: string[],
-    leader_knowledge: DancerKnowledge,
-    follower_knowledge: DancerKnowledge
-): Record<string, string[]> => {
-    const partners: Record<string, string[]> = {};
+const getPartnersByDanceStyle = (
+  danceStyle: string,
+  leader_knowledge: DancerKnowledge,
+  follower_knowledge: DancerKnowledge
+): { leader: string; follower: string }[] => {
+  // Get eligible leaders and followers for this style
+  const eligibleLeaders = Object.entries(leader_knowledge)
+    .filter(([_, styles]) => styles.includes(danceStyle))
+    .map(([id]) => id);
 
-    for (const leaderId in leader_knowledge) {
-        const leaderStyles = leader_knowledge[leaderId];
-        partners[leaderId] = [];
+  const eligibleFollowers = Object.entries(follower_knowledge)
+    .filter(([_, styles]) => styles.includes(danceStyle))
+    .map(([id]) => id);
 
-        for (const followerId in follower_knowledge) {
-            // Assumes that a dancer cannot lead and follow at the same time
-            if (leaderId === followerId) continue;
+  // Shuffle arrays for random matching
+  const shuffle = <T>(arr: T[]) => arr.sort(() => Math.random() - 0.5);
+  const leaders = shuffle([...eligibleLeaders]);
+  const followers = shuffle([...eligibleFollowers]);
 
-            const followerStyles = follower_knowledge[followerId];
-            const canFollowLeader = leaderStyles.some(style => dance_styles.includes(style) && followerStyles.includes(style));
-            if (canFollowLeader) {
-                partners[leaderId].push(followerId);
-            }
-        }
+  const matches: Array<{ leader: string; follower: string }> = [];
+  const pairCount = Math.min(leaders.length, followers.length);
+
+  // Each leader and follower is only selected once
+  for (let i = 0; i < pairCount; i++) {
+    if (leaders[i] !== followers[i]) {
+      // Skip if a leader is matched with themselves
+      matches.push({ leader: leaders[i], follower: followers[i] });
+    }
   }
 
-  return partners;
-}
+  return matches;
+};

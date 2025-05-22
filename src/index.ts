@@ -2,12 +2,22 @@ import { Hono, Context } from 'hono';
 import { serve } from '@hono/node-server';
 import { z } from 'zod';
 import { calculatePartners, CalculatePartnersRequest } from './handlers/calculatePartners';
+import { getDancePreferences } from './handlers/dancePreferences';
 
 export const app = new Hono()
 
 app.get('/*', (c) => {
   return c.text('Try calling: POST /calculate-partners')
 });
+
+app.get('/dance-preferences', (c: Context) => {
+  try {
+    const dancePreferences = getDancePreferences();
+    return c.json(dancePreferences, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 400)
+  }
+})
 
 const CalculatePartnersRequestSchema = z.object({
   total_leaders: z.number().int().min(1),
