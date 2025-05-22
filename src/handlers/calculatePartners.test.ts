@@ -77,6 +77,22 @@ describe('calculatePartners', () => {
             expect(res.average_dance_partners).toBe(0)
         })
 
+        it('does not pair a leader and follower more than once', async () => {
+            const req: CalculatePartnersRequest = {
+                ...baseRequest,
+                total_leaders: 1,
+                total_followers: 1,
+                leader_knowledge: {
+                    'A': ['Waltz', 'Waltz'],
+                },
+                follower_knowledge: {
+                    '1': ['Waltz', 'Waltz'],
+                },
+            }
+            const res = await calculatePartners(req)
+            expect(res.average_dance_partners).toBe(1)
+        })
+
         it('returns 0 when no followers match any leader', async () => {
             const req: CalculatePartnersRequest = {
                 ...baseRequest,

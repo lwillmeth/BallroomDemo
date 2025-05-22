@@ -1,48 +1,49 @@
-import { describe, it, expect } from '@jest/globals';
-import { handler } from './index'
-import { LambdaEvent, LambdaContext } from 'hono/aws-lambda';
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import request from 'supertest';
+import { serve, ServerType } from '@hono/node-server';
+import { app } from './index';
 
 describe('POST /calculate-partners', () => {
-    const context: LambdaContext = {} as any
-    const baseEvent: LambdaEvent = {
-        routeKey: 'POST /calculate-partners',
-        rawPath: '/calculate-partners',
-        requestContext: { http: { method: 'POST', path: '/calculate-partners' } } as any,
-        body: JSON.stringify({
-            total_leaders: 2,
-            total_followers: 2,
-            dance_styles: ['Waltz'],
-            leader_knowledge: { '1': ['Waltz'], '2': ['Waltz'] },
-            follower_knowledge: { 'A': ['Waltz'], 'B': ['Waltz'] },
-            dance_duration_minutes: 10
-        }),
-        isBase64Encoded: false,
-        headers: { 'content-type': 'application/json' },
-        version: '2.0',
-        rawQueryString: '',
-    }
+  let server: ServerType;
+  
+  beforeAll(async () => {
+    server = await serve({ fetch: app.fetch, port: 0 });
+  });
+
+  afterAll(async () => {
+    await server.close();
+  });
 
   it('returns 200 and result for valid input', async () => {
-    const response = await handler(baseEvent, context)
-    expect(response.statusCode).toBe(200)
-    expect(response.body).toContain('average_dance_partners')
-  })
+    const response = await request(server)
+      .post('/calculate-partners')
+      .send({
+        total_leaders: 2,
+        total_followers: 2,
+        dance_styles: ['Waltz'],
+        leader_knowledge: { '1': ['Waltz'], '2': ['Waltz'] },
+        follower_knowledge: { 'A': ['Waltz'], 'B': ['Waltz'] },
+        dance_duration_minutes: 10
+      })
+      .set('Content-Type', 'application/json');
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('average_dance_partners');
+  });
 
   it('returns 400 for invalid input', async () => {
-    const event = {
-        ...baseEvent,
-      body: JSON.stringify({
+    const response = await request(server)
+      .post('/calculate-partners')
+      .send({
         total_leaders: 0,
         total_followers: 2,
         dance_styles: ['Waltz'],
         leader_knowledge: { '1': ['Waltz'] },
         follower_knowledge: { 'A': ['Waltz'] },
         dance_duration_minutes: 10
-      }),
-    }
-
-    const response = await handler(event, context)
-    expect(response.statusCode).toBe(400)
-    expect(response.body).toContain('error')
-  })
-})
+      })
+      .set('Content-Type', 'application/json');
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty('error');
+    expect(response.body.error).toContain('total_leaders');
+  });
+});
